@@ -1,3 +1,5 @@
+import json
+
 # PROJET QUESTIONNAIRE V3 : POO
 #
 # - Pratiquer sur la POO
@@ -19,11 +21,14 @@
 #    - lancer()
 #
 
+
+# Modification de la Class Question (suppression de la variable bonne réponse)
+# La Vérification de la bonne réponse se trouve dans le 2eme index des diffèrents choix
+
 class Question:
-    def __init__(self, titre, choix, bonne_reponse):
+    def __init__(self, titre, choix):
         self.titre = titre
         self.choix = choix
-        self.bonne_reponse = bonne_reponse
 
     def FromData(data):
         # ....
@@ -34,12 +39,14 @@ class Question:
         print("QUESTION")
         print("  " + self.titre)
         for i in range(len(self.choix)):
-            print("  ", i+1, "-", self.choix[i])
+            print("  ", i+1, "-", self.choix[i][0])
 
         print()
         resultat_response_correcte = False
         reponse_int = Question.demander_reponse_numerique_utlisateur(1, len(self.choix))
-        if self.choix[reponse_int-1].lower() == self.bonne_reponse.lower():
+
+
+        if self.choix[reponse_int-1][1]:
             print("Bonne réponse")
             resultat_response_correcte = True
         else:
@@ -73,27 +80,20 @@ class Questionnaire:
         return score
 
 
-"""questionnaire = (
-    ("Quelle est la capitale de la France ?", ("Marseille", "Nice", "Paris", "Nantes", "Lille"), "Paris"), 
-    ("Quelle est la capitale de l'Italie ?", ("Rome", "Venise", "Pise", "Florence"), "Rome"),
-    ("Quelle est la capitale de la Belgique ?", ("Anvers", "Bruxelles", "Bruges", "Liège"), "Bruxelles")
-                )
 
-lancer_questionnaire(questionnaire)"""
+# Test de 1 question d'un fichier json
 
-# q1 = Question("Quelle est la capitale de la France ?", ("Marseille", "Nice", "Paris", "Nantes", "Lille"), "Paris")
-# q1.poser()
+f = open("animaux_leschats_debutant.json", "r")
+data = json.load(f)
+f.close()
 
-# data = (("Marseille", "Nice", "Paris", "Nantes", "Lille"), "Paris", "Quelle est la capitale de la France ?")
-# q = Question.FromData(data)
-# print(q.__dict__)
+titre = data["questions"][0]["titre"]
+choix = data["questions"][0]["choix"]
+
+
 
 Questionnaire(
     (
-    Question("Quelle est la capitale de la France ?", ("Marseille", "Nice", "Paris", "Nantes", "Lille"), "Paris"), 
-    Question("Quelle est la capitale de l'Italie ?", ("Rome", "Venise", "Pise", "Florence"), "Rome"),
-    Question("Quelle est la capitale de la Belgique ?", ("Anvers", "Bruxelles", "Bruges", "Liège"), "Bruxelles")
+    Question(titre, choix),
     )
 ).lancer()
-
-
