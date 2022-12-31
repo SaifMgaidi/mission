@@ -81,19 +81,25 @@ class Questionnaire:
 
 
 
-# Test de 1 question d'un fichier json
+# Récupération de toutes les questions d'un questionnaires json créé depuis import.py (en dur)
 
 f = open("animaux_leschats_debutant.json", "r")
 data = json.load(f)
 f.close()
 
-titre = data["questions"][0]["titre"]
-choix = data["questions"][0]["choix"]
+# On ajoute une question avec son titre et ses choix dans une liste qui regroupe toutes
+# les questions du fichier json
+
+questions = []
+
+for question in data["questions"]:
+    titre = question["titre"]
+    choix = question["choix"]
+    questions.append(Question(titre, choix))
 
 
+# On ne crée plus de question en dur, on passe directement la liste qui contient toutes les questions
 
 Questionnaire(
-    (
-    Question(titre, choix),
-    )
+    questions,
 ).lancer()
