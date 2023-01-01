@@ -2,8 +2,6 @@ import requests
 import json
 import unicodedata
 
-# ====> REMARQUE : Les Url ci-dessous sont différentes que celles affichées dans la vidéo.
-# C'est normal, continuez bien avec les url de ce fichier
 open_quizz_db_data = (
     ("Animaux", "Les chats", "https://www.codeavecjonathan.com/res/mission/openquizzdb_50.json"),
     ("Arts", "Musée du Louvre", "https://www.codeavecjonathan.com/res/mission/openquizzdb_86.json"),
@@ -29,12 +27,12 @@ def generate_json_file(categorie, titre, url):
     try:
         response = requests.get(url)
     except:
-        print(f"Erreur requete url du Questionnaire {titre} de la catégorie {categorie}: {url}")
+        print(f"Erreur GET url du Questionnaire {titre} de la catégorie {categorie}: {url}")
     else:
         try:
             data = json.loads(response.text)
         except:
-             print(f"Erreur data url du Questionnaire {titre} de la catégorie {categorie}: {url}")
+             print(f"Erreur désérialisation du Questionnaire {titre} de la catégorie {categorie}: {url}")
         else:
             all_quizz = data["quizz"]["fr"]
             for quizz_title, quizz_data in all_quizz.items():
