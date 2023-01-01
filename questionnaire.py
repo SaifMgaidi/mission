@@ -1,29 +1,14 @@
 import json
+import os
 
-# PROJET QUESTIONNAIRE V3 : POO
-#
-# - Pratiquer sur la POO
-# - Travailler sur du code existant
-# - Mener un raisonnement
-#
-# -> Définir les entitées (données, actions)
-#
-# Question
-#    - titre       - str
-#    - choix       - (str)
-#    - bonne_reponse   - str
-#
-#    - poser()  -> bool
-#
-# Questionnaire
-#    - questions      - (Question)
-#
-#    - lancer()
-#
+def demande_et_verification_du_fichier_json():
+    filename = input("questionnaires json: ")
+    if os.path.exists(filename):
+        return filename
+    else:
+        print("Erreur: Le fichier est introuvable")
+        return demande_et_verification_du_fichier_json()
 
-
-# Modification de la Class Question (suppression de la variable bonne réponse)
-# La Vérification de la bonne réponse se trouve dans le 2eme index des diffèrents choix
 
 class Question:
     def __init__(self, titre, choix):
@@ -36,7 +21,7 @@ class Question:
         return q
 
     def poser(self):
-        print("QUESTION")
+        
         print("  " + self.titre)
         for i in range(len(self.choix)):
             print("  ", i+1, "-", self.choix[i][0])
@@ -68,28 +53,40 @@ class Question:
         return Question.demander_reponse_numerique_utlisateur(min, max)
     
 class Questionnaire:
-    def __init__(self, questions):
+    def __init__(self, questions, infos):
         self.questions = questions
+        self.infos = infos
 
     def lancer(self):
         score = 0
-        for question in self.questions:
-            if question.poser():
+
+        print("Bienvenue !")
+        print("Retrouve ci-dessous, les informations du Quizz !")
+        print("Catégorie:", self.infos[0][0])
+        print("Titre:", self.infos[0][1])
+        print("Difficulté:", self.infos[0][2])
+        print("Nombres de Questions:", len(self.questions))
+        print("A vous de jouer !")
+        print()
+        for i in range(0, len(self.questions)):
+            print(f"question {i+1} / {len(self.questions)}")
+            if self.questions[i].poser():
                 score += 1
         print("Score final :", score, "sur", len(self.questions))
         return score
 
 
+# Le fichier json est demandé à l'utilisateur, puis il est verifié
+filename = demande_et_verification_du_fichier_json()
 
-# Récupération de toutes les questions d'un questionnaires json créé depuis import.py (en dur)
-
-f = open("animaux_leschats_debutant.json", "r")
+f = open(filename, "r")
 data = json.load(f)
 f.close()
 
 # On ajoute une question avec son titre et ses choix dans une liste qui regroupe toutes
 # les questions du fichier json
 
+questionnaires_infos = [(data["categorie"], data["titre"], data["difficulte"])]
 questions = []
 
 for question in data["questions"]:
@@ -98,8 +95,6 @@ for question in data["questions"]:
     questions.append(Question(titre, choix))
 
 
-# On ne crée plus de question en dur, on passe directement la liste qui contient toutes les questions
 
-Questionnaire(
-    questions,
-).lancer()
+# On ne crée plus de question en dur, on passe directement la liste qui contient toutes les questions
+Questionnaire(questions, questionnaires_infos).lancer()
