@@ -1,72 +1,43 @@
 import json
-import os
 import sys
-
-# Affiche les informations du questionnaire
-def afficher_infos_du_questionnaire(infos):
-    print()
-    print("Catégorie:", infos[0][0])
-    print("Titre:", infos[0][1])
-    print("Difficulté:", infos[0][2])
-    print("Nombres de Questions:", infos[0][3])
-    print()
-
-# Fonction qui vérifie l'existence du fichier
-def fichier_exist(filename):
-    if os.path.exists(filename):
-        return True
-    else:
-        return False
-
-# Fonction qui demande à l'utilisateur de rentrer le fichier Json à charger
-def demande_du_fichier_json():
-    filename = input('Nom du fichier Json: ')
-    if fichier_exist(filename):
-        return filename
-    else:
-        print('Erreur: le fichier Json est introuvable')
-        return demande_du_fichier_json()
-    
-# Prend en paramètre le nom du fichier
-# La fonction lit et récupère les données du fichier Json
-def lecture_et_recuperation_donnees_json(filename):
-    if not fichier_exist:
-        print('Erreur: Le fichier est introuvable')
-        return None
-    f = open(filename, "r")
-    data = json.load(f)
-    f.close()
-    return data
-
 
 
 class Question:
-    def __init__(self, titre, choix):
+    def __init__(self, titre, choix, bonne_reponse):
         self.titre = titre
         self.choix = choix
+        self.bonne_reponse = bonne_reponse
 
     def FromData(data):
         # ....
         q = Question(data[2], data[0], data[1])
         return q
 
-    def poser(self):
-        
+    def from_data_json(data):
+        # Data["choix"] --> (choix(str), bool(bonne_réponse))
+        choix = [i[0] for i in data["choix"]]
+        bonne_reponse = [i[0] for i in data["choix"] if i[1]]
+        # Retourne None si une question possède pas ou plusieurs bonne réponse
+        if len(bonne_reponse) != 1:
+            return None
+        q = Question(data["titre"], choix, bonne_reponse[0])
+        return q
+
+    def poser(self, num_question, nb_questions):
+        print(f"QUESTION {num_question} / {nb_questions} ")
         print("  " + self.titre)
         for i in range(len(self.choix)):
-            print("  ", i+1, "-", self.choix[i][0])
+            print("  ", i+1, "-", self.choix[i])
 
         print()
         resultat_response_correcte = False
         reponse_int = Question.demander_reponse_numerique_utlisateur(1, len(self.choix))
-
-
-        if self.choix[reponse_int-1][1]:
+        if self.choix[reponse_int-1].lower() == self.bonne_reponse.lower():
             print("Bonne réponse")
             resultat_response_correcte = True
         else:
             print("Mauvaise réponse")
-            
+
         print()
         return resultat_response_correcte
 
@@ -81,57 +52,51 @@ class Question:
         except:
             print("ERREUR : Veuillez rentrer uniquement des chiffres")
         return Question.demander_reponse_numerique_utlisateur(min, max)
-    
+
 class Questionnaire:
-    def __init__(self, questions, infos):
+    def __init__(self, categorie, titre, questions, difficulte):
+        self.categorie = categorie
+        self.titre = titre
         self.questions = questions
-        self.infos = infos
+        self.difficulte = difficulte
 
     def lancer(self):
         score = 0
-    
-        print("Bienvenue !")
-        print("Retrouve ci-dessous, les informations du Quizz !")
-
-        afficher_infos_du_questionnaire(self.infos)
-        
-        print("A vous de jouer !")
+        print("QUIZZ")
+        print("----------")
+        print("Catégorie:", self.categorie)
+        print("Titre:", self.titre)
+        print("Difficulté:", self.difficulte)
+        print("Nombres de Question:", len(self.questions))
+        print("----------")
         print()
-        for i in range(0, len(self.questions)):
-            print(f"question {i+1} / {len(self.questions)}")
-            if self.questions[i].poser():
+
+        for i in range(len(self.questions)):
+            if self.questions[i].poser(i+1, len(self.questions)):
                 score += 1
         print("Score final :", score, "sur", len(self.questions))
         return score
 
+    def from_data_json(data):
+        questions = [Question.from_data_json(question) for question in data["questions"]]
+        # Récupère les questions qui n'ont pas d'anomalie (qui ne retourne pas None)
+        questions = [question for question in questions if question]
+        return Questionnaire(data["categorie"], data["titre"], questions, data["difficulte"]).lancer()
 
-# Pour ligne de commande: Teste si un paramètre est passé en entrée
-if len(sys.argv) > 1:
-    filename = sys.argv[1]
-    # Vérifie le fichier passé en paramètre
-    if fichier_exist(filename):
-        pass
-    else:
-        print('Erreur: Le paramètre de la ligne de commande ne correspond à aucun fichier Json')
-        exit()
+
+# Lancement du Questionnaire en ligne de commande
+if len(sys.argv) < 2:
+    print("Erreur: Aucun fichier JSON n'a été passé en entrée")
+    exit()
 else:
-    filename = demande_du_fichier_json()
+    filename = sys.argv[1]
+    if not filename[-5:] == ".json":
+        print("Erreur: Veuillez entrer un fichier JSON en entrée")
+    else:
 
+        f = open(filename, "r")
+        data = f.read()
+        f.close()
+        data_json = json.loads(data)
 
-# Variable qui récupère les données du fichier Json
-data = lecture_et_recuperation_donnees_json(filename)
-
-# On ajoute les questions dans la liste questions
-questions = []
-for question in data["questions"]:
-    titre = question["titre"]
-    choix = question["choix"]
-    questions.append(Question(titre, choix))
-
-# On ajoute aussi les infos concernant le questionnaire
-questionnaires_infos = [(data["categorie"], data["titre"], data["difficulte"], len(questions))]
-
-
-# On passe la liste des questions (premier paramètre)
-# On passe les informations du questionnaire (deuxième paramètre)
-Questionnaire(questions, questionnaires_infos).lancer()
+        Questionnaire.from_data_json(data_json)
