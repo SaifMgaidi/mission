@@ -59,6 +59,7 @@ class Questionnaire:
         self.titre = titre
         self.questions = questions
         self.difficulte = difficulte
+        self.nb_questions = len(self.questions)
 
     def lancer(self):
         score = 0
@@ -67,36 +68,59 @@ class Questionnaire:
         print("Catégorie:", self.categorie)
         print("Titre:", self.titre)
         print("Difficulté:", self.difficulte)
-        print("Nombres de Question:", len(self.questions))
+        print("Nombres de Question:", self.nb_questions)
         print("----------")
         print()
 
         for i in range(len(self.questions)):
-            if self.questions[i].poser(i+1, len(self.questions)):
+            if self.questions[i].poser(i+1, self.nb_questions):
                 score += 1
         print("Score final :", score, "sur", len(self.questions))
         return score
 
     def from_data_json(data):
+        if not data.get("titre"):
+            return None
+        if not data.get("questions"):
+            return None
+            
         questions = [Question.from_data_json(question) for question in data["questions"]]
         # Récupère les questions qui n'ont pas d'anomalie (qui ne retourne pas None)
         questions = [question for question in questions if question]
-        return Questionnaire(data["categorie"], data["titre"], questions, data["difficulte"]).lancer()
+
+        if not data.get("categorie"):
+            data["categorie"] = "inconnue"
+        if not data.get("difficulte"):
+            data["difficulte"] = "inconnue"
+
+        return Questionnaire(data["categorie"], data["titre"], questions, data["difficulte"])
+
+    def from_file_json(filename):
+        try:
+            f = open(filename, "r")
+            data = f.read()
+            f.close()
+            data_json = json.loads(data)
+        except:
+            print("Erreur lors de la lecture du fichier JSON")
+        else:
+            return Questionnaire.from_data_json(data_json)
 
 
-# Lancement du Questionnaire en ligne de commande
-if len(sys.argv) < 2:
-    print("Erreur: Aucun fichier JSON n'a été passé en entrée")
-    exit()
-else:
-    filename = sys.argv[1]
-    if not filename[-5:] == ".json":
-        print("Erreur: Veuillez entrer un fichier JSON en entrée")
+if __name__ == "__main__":
+    # Lancement du Questionnaire en ligne de commande
+    if len(sys.argv) < 2:
+        print("Erreur: Aucun fichier JSON n'a été passé en entrée")
+        exit()
     else:
+        filename = sys.argv[1]
+        if not filename[-5:] == ".json":
+            print("Erreur: Veuillez entrer un fichier JSON en entrée")
+        else:    
+            questionnaire = Questionnaire.from_file_json(filename)
+            if questionnaire:
+                questionnaire.lancer()
 
-        f = open(filename, "r")
-        data = f.read()
-        f.close()
-        data_json = json.loads(data)
+            
 
-        Questionnaire.from_data_json(data_json)
+        
